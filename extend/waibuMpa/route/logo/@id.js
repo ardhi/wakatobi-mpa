@@ -7,12 +7,13 @@ async function resolveFile (req) {
   if (req.query.type) type = `-${req.query.type}`
   if (id !== 'main') {
     const plugin = this.app.getPlugin(id)
-    files = await fastGlob(`${plugin.dir.pkg}/logo${type}.*`)
+    files = await fastGlob(`${plugin.dir.pkg}/asset/logo${type}.*`)
     if (files.length > 0) return files[0]
     throw this.error('_notFound')
   }
   // 1. main
-  files = await fastGlob(`${this.app.main.dir.pkg}/logo${type}.*`)
+  console.log(`${this.app.main.dir.pkg}/asset/logo${type}.*`)
+  files = await fastGlob(`${this.app.main.dir.pkg}/asset/logo${type}.*`)
   // 2. site attachment
   if (files.length > 0) return files[0]
   let dir = this.app.getPluginDataDir('dobo')
@@ -24,15 +25,15 @@ async function resolveFile (req) {
   if (files.length > 0) return files[0]
   // 4. default
   dir = this.app.waibu.dir.pkg
-  files = await fastGlob(`${dir}/logo${type}.*`)
+  files = await fastGlob(`${dir}/asset/logo${type}.*`)
   if (files.length > 0) return files[0]
   throw this.error('_notFound')
 }
 
 async function logo (req, reply) {
   const { importModule } = this.app.bajo
-  const handler = await importModule('waibu:/lib/handle-download.js')
-  return await handler.call(this, resolveFile, req, reply)
+  const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
+  return await download.call(this, resolveFile, req, reply)
 }
 
 export default logo

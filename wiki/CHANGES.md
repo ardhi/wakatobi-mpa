@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-07-04
+
+- [2.23.0] Reorganize projects to reduce boot time
+
 ## 2026-07-01
 
 - [2.22.0] Remove ```bajo-config``` dependency

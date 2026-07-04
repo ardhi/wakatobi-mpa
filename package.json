@@ -1,6 +1,6 @@
 {
   "name": "waibu-mpa",
-  "version": "2.22.0",
+  "version": "2.23.0",
   "description": "MPA support for Waibu Framework",
   "main": "index.js",
   "scripts": {
@@ -46,7 +46,9 @@
     "string-strip-html": "^13.5.0"
   },
   "devDependencies": {
+    "chai": "^6.2.2",
     "clean-jsdoc-theme": "^4.3.0",
-    "jsdoc-plugin-intersection": "^1.0.4"
+    "jsdoc-plugin-intersection": "^1.0.4",
+    "mocha": "^11.7.6"
   }
 }
