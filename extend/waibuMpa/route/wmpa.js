@@ -6,7 +6,7 @@ const wmpa = {
     const { get, trim, cloneDeep } = this.app.lib._
     const { getPluginPrefix } = this.app.waibu
     const { importModule } = this.app.bajo
-    const { types: formatTypes, formats } = await importModule('bajo:/lib/formats.js', { asDefaultImport: false })
+    const { types: formatTypes, formats } = await importModule('bajo:/lib/helper.js', { asDefaultImport: false })
     const prefix = {
       virtual: `/${getPluginPrefix('waibuStatic')}/${this.app.waibu.config.prefixVirtual}`,
       asset: `/${getPluginPrefix('waibuStatic')}`,

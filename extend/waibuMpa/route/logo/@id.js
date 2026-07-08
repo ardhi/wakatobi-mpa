@@ -12,7 +12,6 @@ async function resolveFile (req) {
     throw this.error('_notFound')
   }
   // 1. main
-  console.log(`${this.app.main.dir.pkg}/asset/logo${type}.*`)
   files = await fastGlob(`${this.app.main.dir.pkg}/asset/logo${type}.*`)
   // 2. site attachment
   if (files.length > 0) return files[0]

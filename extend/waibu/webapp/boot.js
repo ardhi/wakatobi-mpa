@@ -1,4 +1,4 @@
-import { collectViewEngines, collectThemes, collectIconsets } from '../../lib/helper.js'
+import { collectViewEngines, collectThemes, collectIconsets } from '../../../lib/helper.js'
 
 const boot = {
   level: 10,

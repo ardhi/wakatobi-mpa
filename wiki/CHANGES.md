@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-07-08
+
+- [2.24.0] Update webapp boot process
+- [2.24.0] Update on documentations
+- [2.24.0] Bug fix in `wmpa.js`
+
 ## 2026-07-04
 
 - [2.23.0] Reorganize projects to reduce boot time
