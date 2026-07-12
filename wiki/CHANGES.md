@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-07-12
+
+- [2.24.1] Bug fix in `_buildRoute()`
+
 ## 2026-07-08
 
 - [2.24.0] Update webapp boot process

@@ -1010,6 +1010,10 @@ async function factory (pkgName) {
           }
           if (urlPrefix) m.url = `/${urlPrefix}/${m.url}`
           m.url = trimEnd(m.url, '/')
+          if (isArray(m.methods)) {
+            m.method = [...m.methods]
+            delete m.methods
+          }
           m.method = m.method ?? 'GET'
           await mergeRouteHooks.call(me, m)
           m.config = m.config ?? {}
