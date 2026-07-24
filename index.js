@@ -30,7 +30,7 @@ async function factory (pkgName) {
   const { dayjs, outmatch, parseObject, fs, fastGlob } = this.app.lib
   const { defaultsDeep, isSet, titleize } = this.app.lib.aneka
   const {
-    breakNsPath, importPkg, importModule, readConfig, readJson, runHook, eachPlugins
+    breakNsPath, importPkg, importModule, readConfig, runHook, eachPlugins
   } = this.app.bajo
 
   /**
@@ -979,7 +979,7 @@ async function factory (pkgName) {
         const url = urls.join('/')
         let mod
         if (ext === '.js') mod = await importModule(f)
-        else if (ext === '.json') mod = await readJson(f)
+        else if (ext === '.json') mod = await this.app.bajo.fromJson(f, { readFromFile: true })
         else if (['.html', '.md'].includes(ext)) mod = [{ view: f }]
         if (!mod) continue
         if (isFunction(mod)) mod = [{ handler: mod }]
