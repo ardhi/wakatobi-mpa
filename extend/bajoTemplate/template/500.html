@@ -8,7 +8,7 @@
   </head>
   <body>
     <div class="container-center">
-      <%= error.message %>
+      <%= error.forceShowMessage ? error.message : _t('internalServerErrorDesc') %>
     </div>
   </body>
 </html>
