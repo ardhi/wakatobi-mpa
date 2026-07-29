@@ -3,10 +3,10 @@ const wmpa = {
   method: 'GET',
   noCacheReq: true,
   handler: async function (req, reply) {
-    const { get, trim, cloneDeep } = this.app.lib._
+    const { get, trim } = this.app.lib._
     const { getPluginPrefix } = this.app.waibu
     const { importModule } = this.app.bajo
-    const { types: formatTypes, formats } = await importModule('bajo:/lib/helper.js', { asDefaultImport: false })
+    const { formatterFieldMap, formatter } = await importModule('bajo:/lib/helper.js', { asDefaultImport: false })
     const prefix = {
       virtual: `/${getPluginPrefix('waibuStatic')}/${this.app.waibu.config.prefixVirtual}`,
       asset: `/${getPluginPrefix('waibuStatic')}`,
@@ -28,11 +28,17 @@ const wmpa = {
         rateLimitRetry: 2
       }
     }
-    const formatOpts = cloneDeep(this.app.bajo.config.intl.format)
-    formatOpts.datetime.timeZone = get(req, 'site.setting.sumba.timeZone', 'UTC')
-    formatOpts.date.timeZone = get(req, 'site.setting.sumba.timeZone', 'UTC')
-    formatOpts.time.timeZone = get(req, 'site.setting.sumba.timeZone', 'UTC')
-    const params = { prefix, accessTokenUrl, renderUrl, api, formatOpts, formatTypes, formats }
+    const formatOpts = {
+      datetime: get(req, 'site.setting.bajo.intl.datetime', this.app.bajo.config.intl.datetime),
+      date: get(req, 'site.setting.bajo.intl.date', this.app.bajo.config.intl.date),
+      time: get(req, 'site.setting.bajo.intl.time', this.app.bajo.config.intl.time),
+      timeZone: get(req, 'site.setting.bajo.intl.timeZone', this.app.bajo.config.intl.timeZone),
+      integer: get(req, 'site.setting.bajo.intl.integer', this.app.bajo.config.intl.integer),
+      smallint: get(req, 'site.setting.bajo.intl.smallint', this.app.bajo.config.intl.smallint),
+      float: get(req, 'site.setting.bajo.intl.float', this.app.bajo.config.intl.float),
+      double: get(req, 'site.setting.bajo.intl.double', this.app.bajo.config.intl.double)
+    }
+    const params = { prefix, accessTokenUrl, renderUrl, api, formatOpts, formatterFieldMap, formatter }
     return await reply.view('waibuMpa.template:/wmpa.js', params)
   }
 }

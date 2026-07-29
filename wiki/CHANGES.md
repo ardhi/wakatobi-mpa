@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-07-29
+
+- [2.24.4] Bug fix in `wmpa.js`
+
 ## 2026-07-28
 
 - [2.24.3] Bug fix in `500.html` partial

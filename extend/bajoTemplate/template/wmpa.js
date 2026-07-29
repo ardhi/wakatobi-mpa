@@ -17,8 +17,8 @@ class Wmpa {
     this.apiRateLimitRetry = <%= api.rateLimitRetry %>
     this.formatOpts = <%= _jsonStringify(formatOpts, true) %>
     this.fetchingApi = {}
-    this.formatTypes = <%= _jsonStringify(formatTypes, true) %>
-    this.formats = {
+    this.formatterFieldMap = <%= _jsonStringify(formatterFieldMap, true) %>
+    this.formatter = {
       metric: {
         speedFn: (val) => val,
         speedUnit: 'kmh',
@@ -43,7 +43,7 @@ class Wmpa {
       },
       nautical: {
         speedFn: (val) => val / 1.852,
-        speedUnit: 'knot',
+        speedUnit: 'kn',
         distanceFn: (val) => val / 1.852,
         distanceUnit: 'nm',
         areaFn: (val) => val / 2.92,
@@ -340,25 +340,25 @@ class Wmpa {
   }
 
   formatSpeed = (value) => {
-    return this.formatByType('speed', value, 'float', { withUnit: false })
+    return this.formatByField('speed', value, 'float', { withUnit: false })
   }
 
   formatDistance = (value) => {
-    return this.formatByType('distance', value, 'float', { withUnit: false })
+    return this.formatByField('distance', value, 'float', { withUnit: false })
   }
 
   formatArea = (value) => {
-    return this.formatByType('area', value, 'float', { withUnit: false })
+    return this.formatByField('area', value, 'float', { withUnit: false })
   }
 
   getUnitFormat = (options = {}) => {
     const measure = Alpine.store('map') ? Alpine.store('map').measure : undefined
     let unitSys = options.unitSys ?? measure ?? 'metric'
     if (!['imperial', 'nautical', 'metric'].includes(unitSys)) unitSys = 'metric'
-    return { unitSys, format: this.formats[unitSys] }
+    return { unitSys, format: this.formatter[unitSys] }
   }
 
-  formatByType = (type, value, dataType, options = {}) => {
+  formatByField = (type, value, dataType, options = {}) => {
     const { format } = this.getUnitFormat(options)
     const { withUnit = true } = options
     const lang = options.lang ?? this.lang
@@ -371,11 +371,11 @@ class Wmpa {
     return value + sep + unit
   }
 
-  format = (value, type, options = {}) => {
+  format = (value, type, opts = {}) => {
+    const options = _.cloneDeep(opts)
     const { emptyValue = this.formatOpts.emptyValue } = options
     const lang = options.lang ?? this.lang
     options.withUnit = options.withUnit ?? true
-    let valueFormatted
     if ([undefined, null, ''].includes(value)) return emptyValue
     if (type === 'auto') {
       if (value instanceof Date) type = 'datetime'
@@ -385,28 +385,20 @@ class Wmpa {
       if (options.longitude) return wmapsUtil.decToDms(value, { isLng: true })
     }
     if (['integer', 'smallint', 'float', 'double'].includes(type)) {
-      value = ['integer', 'smallint'].includes(type) ? parseInt(value) : parseFloat(value)
+      value = ['integer', 'smallint'].includes(type) ? parseInt(Math.round(value)) : parseFloat(value)
       if (isNaN(value)) return emptyValue
-      for (const u of this.formatTypes) {
-        if (options[u]) valueFormatted = this.formatByType(u, value, type, options)
-      }
-    }
-    if (['integer', 'smallint'].includes(type)) {
-      const setting = _.defaultsDeep(options.integer, this.formatOpts.integer)
-      value = new Intl.NumberFormat(lang, setting).format(Math.round(value))
-      return valueFormatted && options.withUnit ? valueFormatted : value
-    }
-    if (['float', 'double'].includes(type)) {
       const setting = _.defaultsDeep(options[type], this.formatOpts[type])
-      value = new Intl.NumberFormat(lang, setting).format(value)
-      return valueFormatted && options.withUnit ? valueFormatted : value
+      const field = this.formatterFieldMap[options.field]
+      return field ? this.formatByField(field, value, type, options) : new Intl.NumberFormat(lang, setting).format(value)
     }
     if (['datetime', 'date'].includes(type)) {
       const setting = _.defaultsDeep(options[type], this.formatOpts[type])
+      setting.timeZone = setting.timeZone ?? this.formatOpts.timeZone
       return new Intl.DateTimeFormat(lang, setting).format(new Date(value))
     }
     if (['time'].includes(type)) {
       const setting = _.defaultsDeep(options.time, this.formatOpts.time)
+      setting.timeZone = setting.timeZone ?? this.formatOpts.timeZone
       return new Intl.DateTimeFormat(lang, setting).format(new Date('1970-01-01T' + value + 'Z'))
     }
     if (['array'].includes(type)) return value.join(', ')
@@ -420,11 +412,13 @@ class Wmpa {
       if (!_.has(props, s)) props[s] = null
     }
     for (const p in props) {
-      const opts = _.cloneDeep(this.formatOpts)
       if (_.isFunction(schema[p])) props[p] = schema[p](props[p])
       else {
         const [type, subType] = (schema[p] ?? 'auto').split(':')
-        if (subType) opts[subType] = true
+        const opts = _.cloneDeep(this.formatOpts)
+        opts.field = subType ?? p
+        if (p === 'lng') opts.longitude = true
+        if (p === 'lat') opts.latitude = true
         if (emptyValue) opts.emptyValue = emptyValue
         props[p] = this.format(props[p], type, opts)
       }
