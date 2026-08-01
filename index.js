@@ -787,6 +787,78 @@ async function factory (pkgName) {
     }
 
     /**
+     * Check and set the iconset for a request
+     * @async
+     * @method
+     * @param {Object} req - The request object
+     * @param {Object} reply - The reply object
+     * @returns {Promise<void>} A promise that resolves when the iconset is checked and set
+     */
+    checkIconset = async (req, reply) => {
+      const { get, isString } = this.app.lib._
+      const mpa = this.app.waibuMpa
+
+      if (!req.site) return
+      const siteIconset = get(req, 'site.setting.waibuMpa.iconset')
+      req.iconset = siteIconset ?? get(mpa, 'config.iconset.set', 'default')
+      const hiconset = req.headers['x-iconset']
+      if (isString(hiconset) && mpa.getIconset(hiconset)) req.iconset = hiconset
+      req.iconset = req.iconset ?? 'default'
+    }
+
+    /**
+     * Check and set the theme for a request
+     * @async
+     * @method
+     * @param {Object} req - The request object
+     * @param {Object} reply - The reply object
+     * @returns {Promise<void>} A promise that resolves when the theme is checked and set
+     */
+    checkTheme = async (req, reply) => {
+      const { get, isString } = this.app.lib._
+      const mpa = this.app.waibuMpa
+
+      if (!req.site) return
+      const siteTheme = get(req, 'site.setting.waibuMpa.theme')
+      req.theme = siteTheme ?? get(mpa, 'config.theme.set', 'default')
+      const htheme = req.headers['x-theme']
+      if (isString(htheme) && mpa.getTheme(htheme)) req.theme = htheme
+      req.theme = req.theme ?? 'default'
+    }
+
+    /**
+     * Normalize menu items by checking their routes and removing invalid entries.
+     *
+     * @async
+     * @method
+     * @param {Array<Object>} items - The menu items to normalize
+     * @param {Object} req - The request object
+     * @returns {Promise<Array<Object>>} - The normalized menu items
+     */
+    normalizeMenuItems = async (items, req) => {
+      const { pullAt } = this.app.lib._
+      const { checkRoute } = this.app.waibu
+      const menu = []
+      for (const item of items) {
+        if (item.href) {
+          try {
+            await checkRoute(req, [item.href])
+            menu.push(item)
+          } catch (err) {}
+        } else menu.push(item)
+      }
+      const deleted = []
+      menu.forEach((item, index) => {
+        if (!item.href) {
+          const next = menu[index + 1]
+          if (!next || next.title === '-') deleted.push(index)
+        }
+      })
+      pullAt(menu, deleted)
+      return menu
+    }
+
+    /**
      * Apply formatting to the given text based on the options.
      *
      * @async
@@ -1022,6 +1094,8 @@ async function factory (pkgName) {
           m.config.webApp = parent ?? ns
           m.config.xSite = m.xSite
           m.config.mainSiteEdit = m.mainSiteEdit
+          m.config.noMenu = m.noMenu
+          m.config.noSidebar = m.noSidebar
           m.config.ns = ns
           m.config.subNs = ''
           m.config.noCacheReq = m.noCacheReq
