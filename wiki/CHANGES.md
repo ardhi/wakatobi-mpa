@@ -5,6 +5,7 @@
 - [2.25.0] Add `checkTheme()` and `checkIconset()` moved from `sumba`
 - [2.25.0] Add `normalizeMenuItems()` to filter menu items based on route availability
 - [2.25.0] Add `noMenu` option to `wmpa.js` to exclude it from menu items
+- [2.25.1] Bug fix in `normalizeMenuItems()` to handle single separator menu items
 
 ## 2026-07-29
 

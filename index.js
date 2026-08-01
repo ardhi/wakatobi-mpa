@@ -838,7 +838,7 @@ async function factory (pkgName) {
     normalizeMenuItems = async (items, req) => {
       const { pullAt } = this.app.lib._
       const { checkRoute } = this.app.waibu
-      const menu = []
+      let menu = []
       for (const item of items) {
         if (item.href) {
           try {
@@ -855,6 +855,7 @@ async function factory (pkgName) {
         }
       })
       pullAt(menu, deleted)
+      if (menu.length === 1 && menu[0].title === '-') menu = []
       return menu
     }
 
