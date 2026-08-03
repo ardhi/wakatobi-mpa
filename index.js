@@ -1005,8 +1005,8 @@ async function factory (pkgName) {
      * Create route for '/robots.txt'.
      *
      * Location of robots.txt file can be found in:
-     * 1. main plugin's file; if not found, then
-     * 2. site attachment; if not found, then
+     * 1. site attachment; if not found, then
+     * 2. main plugin's file; if not found, then
      * 3. theme dir; if not found, then
      * 4. default plugin's file
      *
@@ -1019,16 +1019,17 @@ async function factory (pkgName) {
       const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
       const me = this
       this.webAppCtx.get('/robots.txt', async function (req, reply) {
-        // 1. main robots.txt
-        let file = me.app.getPluginFile('main:/robots.txt')
-        // 2. site attachment
-        if (!fs.existsSync(file) && me.app.dobo) {
+        let file
+        // 1. site attachment
+        if (me.app.dobo) {
           const dir = me.app.getPluginDataDir('dobo')
           file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/robots.txt`
         }
+        // 2. main robots.txt
+        if (!fs.existsSync(file)) file = me.app.getPluginFile('main:/robots.txt')
         // 3. theme directory
         const theme = me.themes.find(item => item.name === get(req, 'theme'))
-        if (theme) {
+        if (!fs.existsSync(file) && theme) {
           file = `${theme.plugin.dir.pkg}/asset/${theme.name}/robots.txt`
           if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/robots.txt`
         }
@@ -1064,12 +1065,10 @@ async function factory (pkgName) {
           file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/favicon.${req.params.ext}`
         }
         // 2. main favicon
-        if (!fs.existsSync(file)) {
-          file = me.app.getPluginFile(`main:/asset/favicon.${req.params.ext}`)
-        }
+        if (!fs.existsSync(file)) file = me.app.getPluginFile(`main:/asset/favicon.${req.params.ext}`)
         // 3. theme directory
         const theme = me.themes.find(item => item.name === get(req, 'theme'))
-        if (theme) {
+        if (!fs.existsSync(file) && theme) {
           file = `${theme.plugin.dir.pkg}/asset/${theme.name}/favicon.${req.params.ext}`
           if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/favicon.${req.params.ext}`
         }

@@ -3,6 +3,8 @@
 ## 2026-08-03
 
 - [2.26.0] Add favicon & robots.txt handling from `waibu` package
+- [2.26.1] Bug fix in `_handleFavicon()` to handle favicon from `site` attachment
+- [2.26.1] Bug fix in `_handleRobotsTxt()` to handle favicon from `site` attachment
 
 ## 2026-08-01
 
