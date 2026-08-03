@@ -1002,6 +1002,85 @@ async function factory (pkgName) {
     }
 
     /**
+     * Create route for '/robots.txt'.
+     *
+     * Location of robots.txt file can be found in:
+     * 1. main plugin's file; if not found, then
+     * 2. site attachment; if not found, then
+     * 3. theme dir; if not found, then
+     * 4. default plugin's file
+     *
+     * @async
+     * @method
+     * @returns {Promise<void>}
+     */
+    _handleRobotsTxt = async () => {
+      if (!this.config.robotsTxt) return
+      const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
+      const me = this
+      this.webAppCtx.get('/robots.txt', async function (req, reply) {
+        // 1. main robots.txt
+        let file = me.app.getPluginFile('main:/robots.txt')
+        // 2. site attachment
+        if (!fs.existsSync(file) && me.app.dobo) {
+          const dir = me.app.getPluginDataDir('dobo')
+          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/robots.txt`
+        }
+        // 3. theme directory
+        const theme = me.themes.find(item => item.name === get(req, 'theme'))
+        if (theme) {
+          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/robots.txt`
+          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/robots.txt`
+        }
+        // 4. Default
+        if (!fs.existsSync(file)) file = me.app.getPluginFile('waibuMpa:/asset/robots.txt')
+        reply.header('cache-control', 'max-age=86400')
+        return await download.call(me, file, req, reply)
+      })
+    }
+
+    /**
+     * Create route for '/favicon.:ext'
+     *
+     * Location of favicon file can be found in:
+     * 1. site attachment; if not found, then
+     * 2. main plugin's file; if not found, then
+     * 3. theme dir; if not found, then
+     * 4. default plugin's file
+     *
+     * @async
+     * @method
+     * @returns {Promise<void>}
+     */
+    _handleFavicon = async () => {
+      if (!this.config.favicon) return
+      const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
+      const me = this
+      this.webAppCtx.get('/favicon.:ext', async function (req, reply) {
+        let file
+        // 1. site attachment
+        if (me.app.dobo) {
+          const dir = me.app.getPluginDataDir('dobo')
+          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/favicon.${req.params.ext}`
+        }
+        // 2. main favicon
+        if (!fs.existsSync(file)) {
+          file = me.app.getPluginFile(`main:/asset/favicon.${req.params.ext}`)
+        }
+        // 3. theme directory
+        const theme = me.themes.find(item => item.name === get(req, 'theme'))
+        if (theme) {
+          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/favicon.${req.params.ext}`
+          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/favicon.${req.params.ext}`
+        }
+        // 4. Default
+        if (!fs.existsSync(file)) file = me.app.getPluginFile('waibuMpa:/asset/favicon.png')
+        reply.header('cache-control', 'max-age=86400')
+        return await download.call(me, file, req, reply)
+      })
+    }
+
+    /**
      * Handle sub-applications.
      *
      * @method

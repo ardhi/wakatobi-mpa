@@ -20,7 +20,8 @@ async function resolveFile (req) {
   if (files.length > 0) return files[0]
   // 3. theme
   const theme = this.app.waibuMpa.themes.find(item => item.name === req.theme)
-  files = await fastGlob(`${theme.plugin.dir.pkg}/extend/waibuStatic/asset/logo${type}.*`)
+  files = await fastGlob(`${theme.plugin.dir.pkg}/asset/${theme.name}/logo${type}.*`)
+  if (files.length === 0) files = await fastGlob(`${theme.plugin.dir.pkg}/asset/_common/logo${type}.*`)
   if (files.length > 0) return files[0]
   // 4. default
   dir = this.app.waibu.dir.pkg

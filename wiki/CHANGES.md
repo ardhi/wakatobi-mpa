@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-08-03
+
+- [2.26.0] Add favicon & robots.txt handling from `waibu` package
+
 ## 2026-08-01
 
 - [2.25.0] Add `checkTheme()` and `checkIconset()` moved from `sumba`
