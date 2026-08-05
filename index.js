@@ -84,6 +84,15 @@ async function factory (pkgName) {
      */
     init = async () => {
       this.config.waibu.prefix = trim(this.config.waibu.prefix, '/')
+      const assetMap = {
+        faviconPng: '/favicon.png',
+        robotsTxt: '/robots.txt',
+        appCss: '/asset/css/app.css',
+        appJs: '/asset/js/app.js'
+      }
+      for (const item of Object.keys(assetMap)) {
+        if (this.config.asset[item] === true) this.config.asset[item] = assetMap[item]
+      }
       await toolsFactory.call(this)
       await widgetFactory.call(this)
     }
@@ -1002,9 +1011,12 @@ async function factory (pkgName) {
     }
 
     /**
-     * Create route for '/robots.txt'.
+     * Create route for application wide asset.
+     * Why this special route? Because these assets are special files that can be customized by the user
+     * without ever needing other plugin help (e.g. `waibu-static`). They are global assets that
+     * can be used to override element/styles in the theme or plugin.
      *
-     * Location of robots.txt file can be found in:
+     * Location of asset file can be found in:
      * 1. site attachment; if not found, then
      * 2. main plugin's file; if not found, then
      * 3. theme dir; if not found, then
@@ -1012,69 +1024,33 @@ async function factory (pkgName) {
      *
      * @async
      * @method
+     * @param {string} type - The type of asset to handle (e.g., 'faviconPng', 'robotsTxt', 'appCss')
      * @returns {Promise<void>}
      */
-    _handleRobotsTxt = async () => {
-      if (!this.config.robotsTxt) return
+    _handleAppAsset = async (type) => {
       const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
       const me = this
-      this.webAppCtx.get('/robots.txt', async function (req, reply) {
+      let asset = this.config.asset[type]
+      if (!asset) return
+      asset = path.basename(asset)
+      this.webAppCtx.get(this.config.asset[type], async function (req, reply) {
         let file
         // 1. site attachment
         if (me.app.dobo) {
           const dir = me.app.getPluginDataDir('dobo')
-          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/robots.txt`
+          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/${asset}`
         }
-        // 2. main robots.txt
-        if (!fs.existsSync(file)) file = me.app.getPluginFile('main:/robots.txt')
+        // 2. main asset
+        if (!fs.existsSync(file)) file = me.app.getPluginFile(`main:/asset/${asset}`)
         // 3. theme directory
         const theme = me.themes.find(item => item.name === get(req, 'theme'))
         if (!fs.existsSync(file) && theme) {
-          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/robots.txt`
-          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/robots.txt`
+          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/${asset}`
+          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/${asset}`
         }
         // 4. Default
-        if (!fs.existsSync(file)) file = me.app.getPluginFile('waibuMpa:/asset/robots.txt')
-        reply.header('cache-control', 'max-age=86400')
-        return await download.call(me, file, req, reply)
-      })
-    }
-
-    /**
-     * Create route for '/favicon.:ext'
-     *
-     * Location of favicon file can be found in:
-     * 1. site attachment; if not found, then
-     * 2. main plugin's file; if not found, then
-     * 3. theme dir; if not found, then
-     * 4. default plugin's file
-     *
-     * @async
-     * @method
-     * @returns {Promise<void>}
-     */
-    _handleFavicon = async () => {
-      if (!this.config.favicon) return
-      const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
-      const me = this
-      this.webAppCtx.get('/favicon.:ext', async function (req, reply) {
-        let file
-        // 1. site attachment
-        if (me.app.dobo) {
-          const dir = me.app.getPluginDataDir('dobo')
-          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/favicon.${req.params.ext}`
-        }
-        // 2. main favicon
-        if (!fs.existsSync(file)) file = me.app.getPluginFile(`main:/asset/favicon.${req.params.ext}`)
-        // 3. theme directory
-        const theme = me.themes.find(item => item.name === get(req, 'theme'))
-        if (!fs.existsSync(file) && theme) {
-          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/favicon.${req.params.ext}`
-          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/favicon.${req.params.ext}`
-        }
-        // 4. Default
-        if (!fs.existsSync(file)) file = me.app.getPluginFile('waibuMpa:/asset/favicon.png')
-        reply.header('cache-control', 'max-age=86400')
+        if (!fs.existsSync(file)) file = me.app.getPluginFile(`waibuMpa:/asset/${asset}`)
+        reply.header('cache-control', `max-age=${me.config.asset.maxAgeDur / 1000}`)
         return await download.call(me, file, req, reply)
       })
     }

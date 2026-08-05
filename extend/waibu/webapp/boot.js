@@ -16,8 +16,9 @@ const boot = {
     await handleCompress.call(this, this.config.compress)
     await handleMultipartBody.call(this, this.config.multipart)
     await this._decorate()
-    await this._handleFavicon()
-    await this._handleRobotsTxt()
+    for (const item of ['faviconPng', 'robotsTxt', 'appCss', 'appJs']) {
+      if (this.config.asset[item]) await this._handleAppAsset(item)
+    }
     await this._handleSession()
     await routeHook.call(this, this.ns)
     await collectViewEngines.call(this)

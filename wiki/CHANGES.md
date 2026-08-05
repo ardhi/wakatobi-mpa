@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-08-05
+
+- [2.27.0] Add `_handleAppAsset()`. Now supports `faviconPng`, `robotsTxt`, `appCss` and `appJs` assets
+- [2.27.0] Remove `_handleFavicon()` and `_handleRobotsTxt()`
+
 ## 2026-08-03
 
 - [2.26.0] Add favicon & robots.txt handling from `waibu` package
