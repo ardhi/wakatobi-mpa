@@ -39,6 +39,7 @@
   "500Title": "Kesalahan Internal Penyelia",
   "fullscreen": "Layar Penuh",
   "_blank_": "",
+  "assetDirRouteDisabled": "Rute aset dinonaktifkan",
   "field": {
     "session": "Sesi",
     "expires": "Kadaluarsa"

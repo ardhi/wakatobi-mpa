@@ -38,6 +38,7 @@
   "500Title": "Internal Server Error",
   "fullscreen": "Fullscreen",
   "_blank_": "",
+  "assetDirRouteDisabled": "Asset route is disabled",
   "field": {
     "session": "Session",
     "expires": "Expires"

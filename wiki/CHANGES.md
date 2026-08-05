@@ -4,6 +4,7 @@
 
 - [2.27.0] Add `_handleAppAsset()`. Now supports `faviconPng`, `robotsTxt`, `appCss` and `appJs` assets
 - [2.27.0] Remove `_handleFavicon()` and `_handleRobotsTxt()`
+- [2.28.0] Refactor handle all asset serving
 
 ## 2026-08-03
 

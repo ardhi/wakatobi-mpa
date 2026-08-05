@@ -958,20 +958,28 @@ async function factory (pkgName) {
      * @async
      */
     _handleNotFound = async (err, req, reply) => {
-      const welcome = req.url.split('?')[0] === '/'
+      // req & reply are from waibu's fastify context, not this.webAppCtx
       const msg = req.t('routeNotFound%s%s', req.url, req.method)
       const error = err ?? this.error(msg)
       if (err) error.message = msg
-      if (!welcome) {
+
+      const url = req.url.split('?')[0].split('#')[0].toLowerCase()
+
+      const handleWelcome = async () => {
+        reply.header('Content-Type', `text/html; charset=${this.config.page.charset}`)
+        reply.header('Content-Language', req.lang)
+        const tpl = `${this.ns}.template:/welcome.html`
+        req.webApp = this.ns
+        return await this.renderView({ reply, tpl, params: { error } })
+      }
+
+      const handleMisc = async () => {
         error.statusCode = 404
         reply.code(404)
       }
-      reply.header('Content-Type', `text/html; charset=${this.config.page.charset}`)
-      reply.header('Content-Language', req.lang)
-      if (error.noContent) return ''
-      const tpl = welcome ? `${this.ns}.template:/welcome.html` : `${this.ns}.template:/404.html`
-      req.webApp = this.ns
-      return await this.renderView({ reply, tpl, params: { error } })
+
+      if (url === '/') return await handleWelcome()
+      return await handleMisc()
     }
 
     /**
@@ -1011,45 +1019,77 @@ async function factory (pkgName) {
     }
 
     /**
-     * Create route for application wide asset.
-     * Why this special route? Because these assets are special files that can be customized by the user
-     * without ever needing other plugin help (e.g. `waibu-static`). They are global assets that
-     * can be used to override element/styles in the theme or plugin.
-     *
-     * Location of asset file can be found in:
+     * Find the asset file based on the given asset name.
+     * Search order:
      * 1. site attachment; if not found, then
      * 2. main plugin's file; if not found, then
      * 3. theme dir; if not found, then
      * 4. default plugin's file
      *
+     * @param {*} asset - The asset name
+     * @returns {string} - The path to the asset file
+     */
+    _findAssetFile = (asset, req) => {
+      let file
+      // 1. site attachment
+      if (this.app.dobo) {
+        const dir = this.app.getPluginDataDir('dobo')
+        file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/${asset}`
+      }
+      // 2. main asset
+      if (!fs.existsSync(file)) file = this.app.getPluginFile(`main:/asset/${asset}`)
+      // 3. theme directory
+      const theme = this.themes.find(item => item.name === get(req, 'theme'))
+      if (!fs.existsSync(file) && theme) {
+        file = `${theme.plugin.dir.pkg}/asset/${theme.name}/${asset}`
+        if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/${asset}`
+      }
+      // 4. Default
+      if (!fs.existsSync(file)) file = this.app.getPluginFile(`waibuMpa:/asset/${asset}`)
+      return file
+    }
+
+    /**
+     * Create route for serving asset from application asset directory.
+     * Why this special route? Because these assets are special files that can be customized by the user
+     * without ever needing other plugin help (e.g. `waibu-static`). They are global assets that
+     * can be used to override element/styles in the theme or plugin.
+     *
      * @async
      * @method
-     * @param {string} type - The type of asset to handle (e.g., 'faviconPng', 'robotsTxt', 'appCss')
      * @returns {Promise<void>}
      */
-    _handleAppAsset = async (type) => {
+    _handleAssetDir = async () => {
+      if (!this.config.asset.dirRoute) {
+        this.log.warn('assetDirRouteDisabled')
+        return
+      }
       const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
       const me = this
-      let asset = this.config.asset[type]
-      if (!asset) return
-      asset = path.basename(asset)
-      this.webAppCtx.get(this.config.asset[type], async function (req, reply) {
-        let file
-        // 1. site attachment
-        if (me.app.dobo) {
-          const dir = me.app.getPluginDataDir('dobo')
-          file = `${dir}/attachment/SumbaSite/${get(req, 'site.id')}/file/${asset}`
-        }
-        // 2. main asset
-        if (!fs.existsSync(file)) file = me.app.getPluginFile(`main:/asset/${asset}`)
-        // 3. theme directory
-        const theme = me.themes.find(item => item.name === get(req, 'theme'))
-        if (!fs.existsSync(file) && theme) {
-          file = `${theme.plugin.dir.pkg}/asset/${theme.name}/${asset}`
-          if (!fs.existsSync(file)) file = `${theme.plugin.dir.pkg}/asset/_common/${asset}`
-        }
-        // 4. Default
-        if (!fs.existsSync(file)) file = me.app.getPluginFile(`waibuMpa:/asset/${asset}`)
+      this.webAppCtx.get(`${this.config.asset.dirRoute}/*`, async function (req, reply) {
+        const asset = req.params['*']
+        const file = me._findAssetFile(asset, req)
+        reply.header('cache-control', `max-age=${me.config.asset.maxAgeDur / 1000}`)
+        return await download.call(me, file, req, reply)
+      })
+    }
+
+    /**
+     * Create route for serving a specific asset file from the application asset directory.
+     *
+     * @async
+     * @method
+     * @returns {Promise<void>}
+     */
+    _handleAssetFile = async (asset) => {
+      if (!this.config.asset.dirRoute) {
+        this.log.warn('assetDirRouteDisabled')
+        return
+      }
+      const { download } = await importModule('waibu:/lib/helper.js', { asDefaultImport: false })
+      const me = this
+      this.webAppCtx.get(`/${asset}`, async function (req, reply) {
+        const file = me._findAssetFile(asset, req)
         reply.header('cache-control', `max-age=${me.config.asset.maxAgeDur / 1000}`)
         return await download.call(me, file, req, reply)
       })
