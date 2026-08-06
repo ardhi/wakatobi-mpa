@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-08-06
+
+- [2.29.0] Update `_handleSession()` to use the new `app.lib.setInterval()`
+
 ## 2026-08-05
 
 - [2.27.0] Add `_handleAppAsset()`. Now supports `faviconPng`, `robotsTxt`, `appCss` and `appJs` assets

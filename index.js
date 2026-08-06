@@ -1326,6 +1326,7 @@ async function factory (pkgName) {
      * @async
      */
     _handleSession = async () => {
+      const { setInterval } = this.app.lib
       const [cookie, session, flash] = await importPkg('waibu:@fastify/cookie',
         'waibu:@fastify/session', 'waibu:@fastify/flash')
       const cfg = this.getConfig('session')
@@ -1342,9 +1343,7 @@ async function factory (pkgName) {
       await runHook(`${this.ns}:afterSessionSetup`, this.webAppCtx)
 
       this._trashOldSession()
-      setInterval(() => {
-        this._trashOldSession()
-      }, this.config.session.trashOldDur)
+      await setInterval(this._trashOldSession, this.config.session.trashOldDur, { lockFile: 'trashOldSession', scope: this })
     }
   }
 
