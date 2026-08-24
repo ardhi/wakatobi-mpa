@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-08-24
+
+- [2.30.0] Now use the new `app.lib.startInterval()`
+
 ## 2026-08-06
 
 - [2.29.0] Update `_handleSession()` to use the new `app.lib.setInterval()`
